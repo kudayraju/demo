@@ -1,0 +1,73 @@
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
+import java.io.{File, FileReader}
+import java.io.BufferedReader
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+def getStrToAnyConfigurationMap(propBufferReader: BufferedReader): Predef.Map[String, Any] = {
+    val mapper = new ObjectMapper
+
+    mapper.registerModule(DefaultScalaModule)
+    val x = mapper.readValue(propBufferReader, classOf[Predef.Map[String, Any]])
+    println("x.size :: " + x.size + "\n x :: " + x)
+    x
+}
+
+val jobPropertyPath = "hdfs:///datadrive/userapp/dev/loadS3DPSaveS3/billingAccount/dp_billingAccount.conf"
+var jobPropBufferReader: BufferedReader = null
+if (jobPropertyPath.toLowerCase().startsWith("hdfs://")) {
+println("1111111")
+val conf = new Configuration()
+val hdfs = FileSystem.get(conf)
+val orginalJobPropertyPath = jobPropertyPath.substring("hdfs://".length)
+val hdfsFile = new Path(orginalJobPropertyPath)
+jobPropBufferReader = new BufferedReader(new InputStreamReader(hdfs.open(hdfsFile)))
+} else if (jobPropertyPath.toLowerCase().startsWith("dbfs:")) {
+import scala.io.Source
+jobPropBufferReader = new BufferedReader(Source.fromFile(jobPropertyPath).bufferedReader())
+println("inside context dbfs...")
+}else {
+println("2222")
+jobPropBufferReader = new BufferedReader(new FileReader(jobPropertyPath))
+}
+var jobMapConfig = scala.collection.mutable.Map[String, Any]()
+jobMapConfig = jobMapConfig ++ getStrToAnyConfigurationMap(jobPropBufferReader)
+//val data = jobMapConfig.get("job_config.logLevel").get.asInstanceOf[Predef.Map[String, Any]]
+val data = getJobConfigurationMapForJSONConfig("job_config.source.schema")
+val info = getJobConfigurationParameterForJSONConfig("job_config.logLevel")
+println(data)
+
+
+def getJobConfigurationMapForJSONConfig(key: String): Predef.Map[String, Any] = {
+    println("jobConfig --- " + jobMapConfig)
+    println("key --- " + key)
+    val keys = key.split("[.]")
+    val depth = keys.length
+    var a = 0;
+    var tempMap : scala.collection.mutable.Map[String, Any] = jobMapConfig
+    // for loop execution with a range
+    for( a <- 1 to depth){
+      tempMap = collection.mutable.Map(tempMap.get(keys(a-1)).get.asInstanceOf[Predef.Map[String, Any]].toSeq: _*)
+    }
+    tempMap.toMap
+}
+
+  def getJobConfigurationParameterForJSONConfig(key: String): String = {
+    println("jobMapConfig --- " + jobMapConfig)
+    println("key --- " + key)
+    val keys = key.split("[.]")
+    val depth = keys.length
+    var a = 0;
+    var tempMap : scala.collection.mutable.Map[String, Any] = jobMapConfig
+    // for loop execution with a range
+    for( a <- 1 to depth-1){
+      tempMap = collection.mutable.Map(tempMap.get(keys(a-1)).get.asInstanceOf[Predef.Map[String, Any]].toSeq: _*)
+    }
+    tempMap.get(keys(depth-1)).get.asInstanceOf[String]
+  }
+
+
+spark-shell --packages com.fasterxml.jackson.core:jackson-databind:2.9.6 com.fasterxml.jackson.module:jackson-module-scala:2.9.6
