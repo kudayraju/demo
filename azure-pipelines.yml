@@ -22,3 +22,5 @@ steps:
   displayName: 'Running $ sbt package'
 - script: sbt test
   displayName: 'Running $ sbt test'
+- script: publish artifacts
+  displayName: 'Publish Artifacts'
