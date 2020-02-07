@@ -24,5 +24,5 @@ steps:
   displayName: 'Running $ sbt test'
 - task: PublishPipelineArtifact@1 
   inputs: 
-    path: '$(System.DefaultWorkingDirectory)'
+    path: '$(System.DefaultWorkingDirectory)/target/scala-2.11/optimus-common_2.11-1.0.1.jar'
     artifact: 'drop'
