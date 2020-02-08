@@ -1,0 +1,28 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: echo Hello, Demo-Project
+  displayName: 'Run a one-line script'
+- script: sbt clean
+  displayName: 'Running $ sbt clean'
+- script: sbt update
+  displayName: 'Running $ sbt update'
+- script: sbt compile
+  displayName: 'Running $ sbt compile'
+- script: sbt package
+  displayName: 'Running $ sbt package'
+- script: sbt test
+  displayName: 'Running $ sbt test'
+- task: PublishPipelineArtifact@1 
+  inputs: 
+    path: '$(System.DefaultWorkingDirectory)/target/scala-2.11/optimus-common_2.11-1.0.1.jar'
+    artifact: 'drop'
